@@ -1,6 +1,12 @@
+import pathlib
+
 import pytest
+from pip._internal.network import download
+
+from Prefetch.PrefetchCleaner import PrefetchCleaner
 from Temp.TempCleaner import TempCleaner
 from BaseCleaner.BaseCleaner import BaseCleaner
+from SoftwareDistribution.SoftwareDistributionCleaner import SoftwareDistributionCleaner
 
 class FakeCleaner(BaseCleaner):
     def prepare(self):
@@ -57,3 +63,36 @@ def test_temp_cleaner_cleans_temp_folder(tmp_path):
     assert temp_dir.exists()
     assert temp_cleaner.deleted == 1
     assert temp_cleaner.skipped == 0
+
+def test_prefetch_cleaner_cleans_prefetch_folder(tmp_path):
+    prefetch_dir = tmp_path / "Prefetch"
+    prefetch_dir.mkdir()
+    prefetch_file = prefetch_dir / "test.txt"
+    prefetch_file.write_text("test")
+    prefetch_cleaner = PrefetchCleaner(prefetch_dir)
+    prefetch_cleaner.clean()
+
+    assert not  prefetch_file.exists()
+    assert prefetch_dir.exists()
+    assert prefetch_cleaner.deleted == 1
+    assert prefetch_cleaner.skipped == 0
+
+class FakeSoftwareDistributionCleaner(SoftwareDistributionCleaner):
+    def __init__(self, path: pathlib.Path):
+        super().__init__(path)
+        self.calls = []
+
+    def _service(self, action, name):
+        self.calls.append([action,name])
+
+def test_software_distribution_stops_and_starts_services(tmp_path):
+    download_dir = tmp_path / "Download"
+    download_dir.mkdir()
+    download_file = download_dir / "test.txt"
+    download_file.write_text("test")
+    software_cleaner = FakeSoftwareDistributionCleaner(download_dir)
+    software_cleaner.run()
+
+    assert not download_file.exists()
+    assert software_cleaner.calls == [['stop', 'wuauserv'], ['stop', 'bits'], ['start', 'bits'], ['start', 'wuauserv']]
+
