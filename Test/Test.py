@@ -1,8 +1,6 @@
 import pathlib
-
 import pytest
-from pip._internal.network import download
-
+from DiskCleaner.DiskCleaner import DiskCleaner
 from Prefetch.PrefetchCleaner import PrefetchCleaner
 from Temp.TempCleaner import TempCleaner
 from BaseCleaner.BaseCleaner import BaseCleaner
@@ -96,3 +94,16 @@ def test_software_distribution_stops_and_starts_services(tmp_path):
     assert not download_file.exists()
     assert software_cleaner.calls == [['stop', 'wuauserv'], ['stop', 'bits'], ['start', 'bits'], ['start', 'wuauserv']]
 
+class FakeDiskCleaner(DiskCleaner):
+    def __init__(self, path: pathlib.Path):
+        super().__init__(path)
+        self.called = False
+    def _run_cleanmgr(self):
+        self.called = True
+
+def test_disk_cleaner_cleans_disk_folder(tmp_path):
+    disk_cleaner = FakeDiskCleaner(tmp_path)
+    disk_cleaner.run()
+
+    assert disk_cleaner.called
+    assert disk_cleaner.freed >= 0
