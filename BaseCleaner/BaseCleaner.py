@@ -6,6 +6,7 @@ class BaseCleaner:
     def __init__(self, path: pathlib.Path,expected_name):
         self.deleted = 0
         self.skipped = 0
+        self.freed = 0
         self.path = path
         self.expected_name = str(expected_name)
 

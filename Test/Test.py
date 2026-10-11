@@ -1,5 +1,6 @@
 import pathlib
 import pytest
+from CleanupMenager.CleanupManager import CleanupManager
 from DiskCleaner.DiskCleaner import DiskCleaner
 from Prefetch.PrefetchCleaner import PrefetchCleaner
 from Temp.TempCleaner import TempCleaner
@@ -107,3 +108,16 @@ def test_disk_cleaner_cleans_disk_folder(tmp_path):
 
     assert disk_cleaner.called
     assert disk_cleaner.freed >= 0
+
+def test_manager_continues_after_failure(tmp_path):
+    cleanup_dir = tmp_path / "Temp"
+    cleanup_dir.mkdir()
+    cleanup_file = cleanup_dir/ "test.txt"
+    cleanup_file.write_text("test")
+    manager = CleanupManager()
+    manager.add(FakeCleaner(cleanup_dir,"Temp"))
+    manager.add(BaseCleaner(cleanup_dir,"Temp"))
+    manager.run_all()
+
+    assert not cleanup_file.exists()
+    assert manager.failed_cleaners == ["FakeCleaner"]
