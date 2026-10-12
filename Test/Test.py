@@ -121,3 +121,17 @@ def test_manager_continues_after_failure(tmp_path):
 
     assert not cleanup_file.exists()
     assert manager.failed_cleaners == ["FakeCleaner"]
+
+def test_manager_summary(tmp_path):
+    cleanup_dir = tmp_path / "Temp"
+    cleanup_dir.mkdir()
+    cleanup_file = cleanup_dir/ "test.txt"
+    cleanup_file.write_text("test")
+    manager = CleanupManager()
+    manager.add(FakeCleaner(cleanup_dir,"Temp"))
+    manager.add(BaseCleaner(cleanup_dir,"Temp"))
+    manager.run_all()
+
+    report = manager.summary()
+    assert "FakeCleaner Failed" in report
+    assert "Total Deleted: 1" in report
