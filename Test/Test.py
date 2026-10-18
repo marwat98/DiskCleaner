@@ -3,7 +3,7 @@ import pytest
 from CleanupMenager.CleanupManager import CleanupManager
 from DiskCleaner.DiskCleaner import DiskCleaner
 from Prefetch.PrefetchCleaner import PrefetchCleaner
-from Temp.TempCleaner import TempCleaner
+from TempCleaner.TempCleaner import TempCleaner
 from BaseCleaner.BaseCleaner import BaseCleaner
 from SoftwareDistribution.SoftwareDistributionCleaner import SoftwareDistributionCleaner
 
