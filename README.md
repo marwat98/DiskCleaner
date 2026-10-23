@@ -2,8 +2,6 @@
 
 A Python tool for Windows that frees up disk space by cleaning temporary and cache folders and running the built-in Windows Disk Cleanup utility.
 
-> **Status:** work in progress. The cleaning logic, manager and tests are done; `main.py` is being finished.
-
 ## Features
 
 - Cleans the user's **Temp** folder (`%TEMP%`)
@@ -85,23 +83,6 @@ DiskCleaner/
 ├── main.py                       # entry point
 └── pyproject.toml
 ```
-
-## Running tests
-
-From the project root:
-
-```
-pytest -v
-```
-
-Tests use temporary folders and fake cleaners — they never touch real system folders or Windows services.
-
-## Roadmap
-
-- [x] Finish `main.py`
-- [ ] Dry-run mode (show what would be deleted without deleting)
-- [ ] Measure freed space for folder cleaners
-- [ ] Additional tests: wrong folder name, missing path, locked file
 
 ## Disclaimer
 
