@@ -1,6 +1,6 @@
 # DiskCleaner
 
-A Python tool for Windows that frees up disk space by cleaning temporary and cache folders and running the built-in Windows Disk Cleanup utility.
+A tool for Windows that frees up disk space by cleaning temporary and cache folders and running the built-in Windows Disk Cleanup utility. Written in Python, distributed as a standalone `.exe`.
 
 ## Features
 
@@ -15,13 +15,18 @@ A Python tool for Windows that frees up disk space by cleaning temporary and cac
 - Shows a summary report in the terminal and writes a log file
 - Requests administrator rights via UAC — **no passwords are stored**
 - Can run automatically at logon via Windows Task Scheduler (no UAC prompt)
+- Builds into a standalone `.exe` — **Python is not required** to run it
 
 ## Requirements
 
+**To run the `.exe`:**
 - Windows 10 / 11
-- Python 3.10+
 - Administrator rights (requested automatically at startup)
-- `pytest` (only for running tests)
+
+**To run from source or build the `.exe`:**
+- Python 3.10+
+- `pytest` (for tests)
+- `pyinstaller` (for building)
 
 ## One-time setup
 
@@ -37,13 +42,21 @@ The program later runs `cleanmgr /sagerun:64`, which uses these saved settings.
 
 ## Usage
 
-Run from the project root:
+**Standalone:** double-click `DiskCleaner.exe` and confirm the UAC prompt.
+
+**From source** (in the project root):
 
 ```
 python main.py
 ```
 
-If the program is not running as administrator, it will relaunch itself and show a UAC prompt. Progress and the final summary are shown in the terminal window, which stays open until you close it. Details are written to `cleanup.log` next to `main.py`.
+If the program is not running as administrator, it will request elevation via UAC. Progress and the final summary are shown in the terminal window, which stays open until you close it.
+
+The log file is written to:
+
+```
+C:\ProgramData\DiskCleaner\cleanup.log
+```
 
 > Disk Cleanup can take from a few seconds to several minutes depending on the selected categories.
 
@@ -55,18 +68,36 @@ If the program is not running as administrator, it will relaunch itself and show
 | `INCLUDE_PREFETCH` | `main.py` | `False` | Enables cleaning the Prefetch folder. Windows rebuilds it, but programs may start slower for a while. |
 | `PROFILE` | `DiskCleaner` class | `64` | Disk Cleanup profile number used with `/sageset` and `/sagerun`. |
 
-> Tip: run with `DRY_RUN = True` first to see what would be removed.
+> Tip: run with `DRY_RUN = True` first to see what would be removed. Rebuild the `.exe` after changing any setting.
+
+## Building the executable
+
+In the project root, with the virtual environment active:
+
+```
+python -m pip install pyinstaller
+python -m PyInstaller --onedir --console --uac-admin --name DiskCleaner --icon DiskCleaner.ico --paths . --noconfirm main.py
+```
+
+The result is in `dist\DiskCleaner\` — `DiskCleaner.exe` together with its supporting files. Keep the whole folder; the `.exe` will not run on its own without it.
+
+- `--onedir` – folder build (fewer antivirus false positives than a single file)
+- `--console` – keeps the terminal window for the summary
+- `--uac-admin` – the `.exe` requests administrator rights on start
+- `--icon` – application icon
 
 ## Run automatically at logon
 
-Create a scheduled task (run in a terminal **as administrator**, adjust paths to your project location):
+Create a scheduled task (run in a terminal **as administrator**, adjust the path to where `DiskCleaner.exe` is located):
 
 ```
-schtasks /Create /TN "DiskCleaner" /TR "\"C:\path\to\DiskCleaner\.venv\Scripts\python.exe\" \"C:\path\to\DiskCleaner\main.py\"" /SC ONLOGON /RL HIGHEST /DELAY 0001:00 /F
+schtasks /Create /TN "DiskCleaner" /TR "\"C:\path\to\DiskCleaner\DiskCleaner.exe\"" /SC ONLOGON /RL HIGHEST /DELAY 0001:00 /F
 ```
 
 - `/RL HIGHEST` runs with administrator rights, so no UAC prompt appears
 - `/DELAY 0001:00` waits one minute after logon so system startup is not slowed down
+
+To run weekly instead (e.g. Mondays at 18:00), replace `/SC ONLOGON /DELAY 0001:00` with `/SC WEEKLY /D MON /ST 18:00`.
 
 Test it without restarting:
 
@@ -87,9 +118,9 @@ schtasks /Delete /TN "DiskCleaner" /F
 - **SoftwareDistributionCleaner** – overrides `prepare` / `finish` to stop and restart the `wuauserv` and `bits` services.
 - **DiskCleaner** – overrides `clean` to run `cleanmgr` and measure free disk space before and after.
 - **CleanupManager** – runs all registered cleaners, isolates failures and builds the summary report.
-- **Admin** – checks for administrator rights and relaunches the program with UAC.
+- **Admin** – checks for administrator rights and relaunches the program with UAC (works both from source and as `.exe`).
 
-All system paths are built from environment variables (`SystemRoot`, `TEMP`, `SystemDrive`), so the tool works regardless of which drive Windows is installed on.
+All system paths are built from environment variables (`SystemRoot`, `TEMP`, `SystemDrive`, `ProgramData`), so the tool works regardless of which drive Windows is installed on.
 
 ### Safety
 
@@ -110,9 +141,13 @@ DiskCleaner/
 ├── DiskCleaner/
 ├── CleanupManager/
 ├── Test/                         # pytest tests
+├── DiskCleaner.ico               # application icon
+├── DiskCleaner.spec              # PyInstaller build settings
 ├── main.py                       # entry point
 └── pyproject.toml
 ```
+
+Each package folder contains an empty `__init__.py`. The `build/` and `dist/` folders are created by PyInstaller and are not committed.
 
 ## Running tests
 
