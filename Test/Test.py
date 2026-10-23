@@ -1,8 +1,8 @@
 import pathlib
 import pytest
-from CleanupMenager.CleanupManager import CleanupManager
+from CleanupManager.CleanupManager import CleanupManager
 from DiskCleaner.DiskCleaner import DiskCleaner
-from Prefetch.PrefetchCleaner import PrefetchCleaner
+from PrefetchCleaner.PrefetchCleaner import PrefetchCleaner
 from TempCleaner.TempCleaner import TempCleaner
 from BaseCleaner.BaseCleaner import BaseCleaner
 from SoftwareDistribution.SoftwareDistributionCleaner import SoftwareDistributionCleaner
@@ -135,3 +135,16 @@ def test_manager_summary(tmp_path):
     report = manager.summary()
     assert "FakeCleaner Failed" in report
     assert "Total Deleted: 1" in report
+
+def test_dry_run_does_not_delete(tmp_path):
+    temp_dir = tmp_path / "Temp"
+    temp_dir.mkdir()
+    temp_file = temp_dir / "test.txt"
+    temp_file.write_text("test")
+
+    cleaner = BaseCleaner(temp_dir, "Temp", dry_run=True)
+    cleaner.run()
+
+    assert temp_file.exists()
+    assert cleaner.deleted == 1
+    assert cleaner.freed == 4
