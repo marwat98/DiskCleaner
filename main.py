@@ -15,7 +15,9 @@ from TempCleaner.TempCleaner import TempCleaner
 INCLUDE_PREFETCH = False
 DRY_RUN = False
 
-LOG_FILE = pathlib.Path(__file__).resolve().parent / "cleanup.log"
+DATA_DIR = pathlib.Path(os.environ.get("ProgramData", r"C:\ProgramData")) / "DiskCleaner"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+LOG_FILE = DATA_DIR / "cleanup.log"
 
 
 def wait_until_closed():

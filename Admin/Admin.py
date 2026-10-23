@@ -13,14 +13,23 @@ def is_admin():
         return False
 
 
+def is_frozen():
+    return getattr(sys, "frozen", False)
+
+
 def relaunch_as_admin():
     if ELEVATED_FLAG in sys.argv:
         return False
 
-    script = os.path.abspath(sys.argv[0])
-    params = subprocess.list2cmdline([script, *sys.argv[1:], ELEVATED_FLAG])
-    working_dir = os.path.dirname(script)
+    if is_frozen():
+        args = [*sys.argv[1:], ELEVATED_FLAG]
+        working_dir = os.path.dirname(sys.executable)
+    else:
+        script = os.path.abspath(sys.argv[0])
+        args = [script, *sys.argv[1:], ELEVATED_FLAG]
+        working_dir = os.path.dirname(script)
 
+    params = subprocess.list2cmdline(args)
     result = ctypes.windll.shell32.ShellExecuteW(
         None, "runas", sys.executable, params, working_dir, 1
     )
