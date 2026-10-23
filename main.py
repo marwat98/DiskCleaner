@@ -1,6 +1,8 @@
 import logging
 import os
 import pathlib
+import time
+import traceback
 
 from Admin.Admin import is_admin, relaunch_as_admin
 from CleanupManager.CleanupManager import CleanupManager
@@ -11,18 +13,30 @@ from TempCleaner.TempCleaner import TempCleaner
 
 
 INCLUDE_PREFETCH = False
-DRY_RUN = True
+DRY_RUN = False
+
+LOG_FILE = pathlib.Path(__file__).resolve().parent / "cleanup.log"
+
+
+def wait_until_closed():
+
+    print("\nZakończono oczyszczanie dysku.")
+    try:
+        while True:
+            time.sleep(3600)
+    except KeyboardInterrupt:
+        pass
 
 
 def main():
     if not is_admin():
         relaunch_as_admin()
         print("Program wymaga uprawnień administratora.")
-        input("Naciśnij Enter, aby zakończyć...")
+        wait_until_closed()
         return
 
     logging.basicConfig(
-        filename="cleanup.log",
+        filename=LOG_FILE,
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
@@ -49,10 +63,24 @@ def main():
     else:
         logging.info("Tryb na sucho: pomijam SoftwareDistribution i Disk Cleanup")
 
+    print("DiskCleaner")
+    print("Trwa czyszczenie, proszę czekać...\n")
     manager.run_all()
-    print(manager.summary())
-    input("Naciśnij Enter, aby zakończyć...")
+
+    report = manager.summary()
+    logging.info("Podsumowanie:\n" + report)
+    print("Czyszczenie zakończone.\n")
+    print(report)
+    wait_until_closed()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        error = traceback.format_exc()
+        logging.error(error)
+        print("Wystąpił błąd:\n")
+        print(error)
+        print(f"Szczegóły w pliku: {LOG_FILE}")
+        wait_until_closed()
