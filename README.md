@@ -98,7 +98,7 @@ Tests use temporary folders and fake cleaners — they never touch real system f
 
 ## Roadmap
 
-- [ ] Finish `main.py`
+- [x] Finish `main.py`
 - [ ] Dry-run mode (show what would be deleted without deleting)
 - [ ] Measure freed space for folder cleaners
 - [ ] Additional tests: wrong folder name, missing path, locked file
